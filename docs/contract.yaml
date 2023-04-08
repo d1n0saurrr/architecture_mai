@@ -1,0 +1,209 @@
+openapi: '3.0.0'
+info:
+  version: '1.0.0'
+  title: 'arc API'
+  description: 'Описание API сервера сервиса поиска попутчиков'
+paths:
+  /auth/sign/up:
+    servers: 
+      - url: http://localhost:8081/
+    post:
+        summary: User creation
+        requestBody:
+          description: New user fields
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - login
+                  - password
+                  - email
+                  - firstName
+                  - lastName
+                properties:
+                  login:
+                    type: string
+                  password:
+                    type: string
+                  email:
+                    type: string
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string    
+        responses:
+          201:
+            description: User created
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+          500:
+            $ref: '#/components/responses/InternalServerException'
+            
+  /auth/sign/in:
+    servers: 
+      - url: http://localhost:8081/
+    get:
+      summary: Authorization
+      responses:
+        200:
+          description: Session token created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          $ref: '#/components/responses/InternalServerException'
+      security: 
+        - basicAuth: []
+
+  /auth/validate:
+    servers: 
+      - url: http://localhost:8081/
+    get:
+      summary: Session token validation
+      responses:
+        200:
+          description: Token is ok
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+                  login:
+                    type: string
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          $ref: '#/components/responses/InternalServerException'
+      security:
+        - bearerAuth: []
+
+  /user:
+    servers:
+      - url: http://localhost:8081/
+    get:
+      summary: Get user by id
+      parameters:
+        - name: id
+          description: User id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    email:
+                      type: string
+                    login:
+                      type: string
+                    tel:
+                      type: string
+                    firstName:
+                      type: string
+                    lastName:
+                      type: string
+                    deleted:
+                      type: boolean
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          $ref: '#/components/responses/InternalServerException'
+      security:
+        - bearerAuth: []
+  
+  /user/search:
+    servers: 
+      - url: http://localhost:8081/
+    get:
+      summary: Search users
+      parameters:
+        - name: first_name
+          description: User first name
+          in: query
+          schema:
+            type: string
+        - name: last_name
+          description: User last name
+          in: query
+          schema:
+            type: string
+        - name: email
+          description: User email
+          in: query
+          schema:
+            type: string
+        - name: login
+          description: User login
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    email:
+                      type: string
+                    login:
+                      type: string
+                    tel:
+                      type: string
+                    firstName:
+                      type: string
+                    lastName:
+                      type: string
+                    deleted:
+                      type: boolean
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          $ref: '#/components/responses/InternalServerException'
+      security:
+        - bearerAuth: []
+
+components:
+  responses:
+    UnauthorizedError:
+      description: Session token validation failed or bad user credits
+    InternalServerException:
+      description: Unexpected internal server exeption
+    NotFoundException:
+      description: Entity not found
+  securitySchemes:
+      basicAuth:     
+        type: http
+        scheme: basic
+      bearerAuth:
+        type: http
+        scheme: bearer
+      

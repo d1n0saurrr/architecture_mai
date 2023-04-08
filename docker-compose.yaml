@@ -24,6 +24,26 @@ services:
       test: "/usr/bin/mysql --host=db_node_01 --database=${DB_DATABASE} --user=${DB_LOGIN} --password=${DB_PASSWORD} --execute \"SHOW DATABASES;\""
       timeout: 5s
       retries: 5
+
+  auth_service:
+    build:
+      context: ./
+      dockerfile: ./auth_service/Dockerfile
+    container_name: auth_service
+    environment:
+      DB_HOST: db_node_01
+      DB_PORT: ${DB_PORT}
+      DB_LOGIN: ${DB_LOGIN}
+      DB_PASSWORD: ${DB_LOGIN}
+      DB_DATABASE: ${DB_DATABASE}
+      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT}
+    ports:
+      - ${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}
+    networks:
+      - arch-network
+    depends_on:
+      db_node_01:
+        condition: service_healthy
   
 volumes:
   db-node-01-data:
