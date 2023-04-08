@@ -1,7 +1,7 @@
 openapi: '3.0.0'
 info:
   version: '1.0.0'
-  title: 'arc API'
+  title: 'Arch API'
   description: 'Описание API сервера сервиса поиска попутчиков'
 paths:
   /auth/sign/up:
@@ -127,6 +127,8 @@ paths:
                       type: string
                     deleted:
                       type: boolean
+        400:
+          $ref: '#/components/responses/NotFoundException'
         401:
           $ref: '#/components/responses/UnauthorizedError'
         500:

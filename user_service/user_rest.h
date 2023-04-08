@@ -92,12 +92,12 @@ using Poco::Util::ServerApplication;
 #include <string>
 #include <fstream>
 #include "../database/user.h"
-#include "./auth_service.h"
 #include "../utils/exceptions.h"
+#include "../utils/request.h"
 
-class AuthRequestHandler : public HTTPRequestHandler {
+class UserRequestHandler : public HTTPRequestHandler {
     public:
-        AuthRequestHandler(const std::string &format): _format(format){};
+        UserRequestHandler(const std::string &format): _format(format){};
 
         void handleRequest(HTTPServerRequest &request, HTTPServerResponse &response) {
             response.add("Access-Control-Allow-Origin", "*");
@@ -112,59 +112,70 @@ class AuthRequestHandler : public HTTPRequestHandler {
             }
 
             try {
-                if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET) {
-                    if (hasSubstr(request.getURI(), "/sign/in")) {
-                        std::string scheme;
-                        std::string info;
-                        request.getCredentials(scheme, info);
-                        std::cout << "scheme " << scheme << " :: info " << info << std::endl;
+                std::string scheme;
+                std::string token;
+                request.getCredentials(scheme, token);
 
-                        if (scheme == "Basic") {
-                            std::string token = auth_user(info);
-                            response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_OK);
-                            response.setChunkedTransferEncoding(true);
-                            response.setContentType("application/json");
-                            Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-                            root->set("token", token);
-                            std::ostream &ostr = response.send();
-                            Poco::JSON::Stringifier::stringify(root, ostr);
-                        } else {
-                            throw validation_exception("Only basic auth accepted");
-                        }
-                    } else if (hasSubstr(request.getURI(), "/validate")) {
-                        std::string scheme;
-                        std::string token;
-
-                        request.getCredentials(scheme, token);
-
-                        std::cout << "Scheme/token: " << scheme << "/" << token << std::endl;
-                        if (scheme == "Bearer") {
-                            database::User user = validate(token);
-                            response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_ACCEPTED);
-                            response.setChunkedTransferEncoding(true);
-                            response.setContentType("application/json");
-                            Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-                            root->set("login", user.get_login());
-                            root->set("id", user.get_id());
-                            std::ostream &ostr = response.send();
-                            Poco::JSON::Stringifier::stringify(root, ostr);
-                        } else {
-                            throw access_denied_exception("No bearer token found");
-                        }
-                    }
+                std::string login;
+                long id;
+                if (!validateToken(scheme, token, id, login)) {
+                    std::cout << "Failed to authorize user" << std::endl;
+                    throw access_denied_exception("Failed to authorize user");
                 }
-                
-                if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST) {
-                    if (hasSubstr(request.getURI(), "/sign/up")) {
-                        std::string body = extractBody(request.stream(), request.getContentLength());
-                        long id = create_user(body);
-                        response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_CREATED);
+                std::cout << "Authorized user " << login << std::endl;
+
+                if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET) {
+                    if (hasSubstr(request.getURI(), "/search")) {
+                        const Poco::URI uri(request.getURI());
+                        const Poco::URI::QueryParameters params = uri.getQueryParameters();
+                        database::User likeUser;
+                        for (std::pair<std::string, std::string> key_value: params) {
+                            if (key_value.first == "login") {
+                                likeUser.login() = key_value.second;
+                            } else if (key_value.first == "first_name") {
+                                likeUser.first_name() = key_value.second;
+                            } else if (key_value.first == "last_name") {
+                                likeUser.last_name() = key_value.second;
+                            } else if (key_value.first == "email") {
+                                likeUser.email() = key_value.second;
+                            } else {
+                                std::cout << "Param " << key_value.first << " :: " << key_value.second << " ignored" << std::endl;
+                            }
+                        }
+
+                        std::vector<database::User> result = database::User::search(likeUser);
+                        std::cout << "Found total " << result.size() << std::endl;
+
+                        Poco::JSON::Array arr;
+                        for (database::User user: result) {
+                            arr.add(user.toJSON());
+                        }
+                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
                         response.setChunkedTransferEncoding(true);
                         response.setContentType("application/json");
-                        Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-                        root->set("id", id);
                         std::ostream &ostr = response.send();
-                        Poco::JSON::Stringifier::stringify(root, ostr);
+                        Poco::JSON::Stringifier::stringify(arr, ostr);
+                    } else if (hasSubstr(request.getURI(), "/user")) {
+                        const Poco::URI uri(request.getURI());
+                        const Poco::URI::QueryParameters params = uri.getQueryParameters();
+                        int id;
+                        for (std::pair<std::string, std::string> key_value: params) {
+                            if (key_value.first == "id") {
+                                id = stoi(key_value.second);
+                            }
+                        }
+
+                        database::User user = database::User::get_by_id(id);
+                        if (user.get_id() == -1) {
+                            throw not_found_exception("There is no user with id = " + id);
+                        }
+
+                        std::cout << "Found user: " << user << std::endl;
+                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                        response.setChunkedTransferEncoding(true);
+                        response.setContentType("application/json");
+                        std::ostream &ostr = response.send();
+                        Poco::JSON::Stringifier::stringify(user.toJSON(), ostr);
                     }
                 }
             } catch (validation_exception &ex) {
@@ -229,27 +240,25 @@ class AuthRequestHandler : public HTTPRequestHandler {
         std::string _format;
 };
 
-
-class HTTPAuthRequestFactory : public HTTPRequestHandlerFactory {
+class HTTPUserRequestFactory : public HTTPRequestHandlerFactory {
     public:
-        HTTPAuthRequestFactory(const std::string &format) : _format(format){}
+        HTTPUserRequestFactory(const std::string &format) : _format(format){}
         HTTPRequestHandler *createRequestHandler([[maybe_unused]] const HTTPServerRequest &request){
             std::cout << "request [" << request.getMethod() << "] " << request.getURI() << std::endl;
 
-            if (request.getURI().rfind("/auth") == 0 || 
-                (request.getURI().rfind("http") == 0 && hasSubstr(request.getURI(), "/auth"))) {
-                return new AuthRequestHandler(_format);
-            }  
+            if (request.getURI().rfind("/user") == 0) {
+                return new UserRequestHandler(_format);
+            }
             return 0;
         }
     private:
         std::string _format;
 };
 
-class HTTPAuthWebServer : public Poco::Util::ServerApplication {
+class HTTPUserWebServer : public Poco::Util::ServerApplication {
     public:
-        HTTPAuthWebServer() : _helpRequested(false){}
-        ~HTTPAuthWebServer() {}
+        HTTPUserWebServer() : _helpRequested(false){}
+        ~HTTPUserWebServer() {}
     protected:
         void initialize(Application &self) {
             loadConfiguration();
@@ -260,8 +269,8 @@ class HTTPAuthWebServer : public Poco::Util::ServerApplication {
         }
         int main([[maybe_unused]] const std::vector<std::string> &args) {
             const char * portValue = "8080";
-            if (std::getenv("AUTH_SERVICE_PORT") != nullptr) {
-                portValue = std::getenv("AUTH_SERVICE_PORT");
+            if (std::getenv("USER_SERVICE_PORT") != nullptr) {
+                portValue = std::getenv("USER_SERVICE_PORT");
             }
 
             if (strlen(portValue) == 0) {
@@ -271,12 +280,12 @@ class HTTPAuthWebServer : public Poco::Util::ServerApplication {
 
             if (!_helpRequested) {
                 ServerSocket svs(Poco::Net::SocketAddress("0.0.0.0", atoi(portValue)));
-                HTTPServer srv(new HTTPAuthRequestFactory(DateTimeFormat::SORTABLE_FORMAT), svs, new HTTPServerParams);
+                HTTPServer srv(new HTTPUserRequestFactory(DateTimeFormat::SORTABLE_FORMAT), svs, new HTTPServerParams);
                 srv.start();
-                std::cout << "auth server started on port " << portValue << std::endl;
+                std::cout << "user server started on port " << portValue << std::endl;
                 waitForTerminationRequest();
                 srv.stop();
-                std::cout << "auth server stoped" << std::endl;
+                std::cout << "user server stoped" << std::endl;
             }
             return Application::EXIT_OK;
         }
