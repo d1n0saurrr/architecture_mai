@@ -13,7 +13,7 @@ create table user (
 
 insert into user (login, password, role, first_name, last_name, email, tel) values
 ('admin', '1234', 'admin', 'admin', 'admin', 'admin@admin.com', '+71234567890'),
-('first', '1234', 'user', 'Name1', 'Surname1', 'user@user.com', '+72345678901');
+('user', '1234', 'user', 'Name1', 'Surname1', 'user@user.com', '+72345678901');
 
 create table route (
     id int not null AUTO_INCREMENT,
