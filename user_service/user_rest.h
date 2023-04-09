@@ -246,7 +246,8 @@ class HTTPUserRequestFactory : public HTTPRequestHandlerFactory {
         HTTPRequestHandler *createRequestHandler([[maybe_unused]] const HTTPServerRequest &request){
             std::cout << "request [" << request.getMethod() << "] " << request.getURI() << std::endl;
 
-            if (request.getURI().rfind("/user") == 0) {
+            if (hasSubstr(request.getURI(), "/user?") ||
+                hasSubstr(request.getURI(), "/user/search")) {
                 return new UserRequestHandler(_format);
             }
             return 0;

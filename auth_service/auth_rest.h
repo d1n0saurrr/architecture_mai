@@ -100,6 +100,7 @@ class AuthRequestHandler : public HTTPRequestHandler {
         AuthRequestHandler(const std::string &format): _format(format){};
 
         void handleRequest(HTTPServerRequest &request, HTTPServerResponse &response) {
+            std::cout << "into auth" << std::endl;
             response.add("Access-Control-Allow-Origin", "*");
             response.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
             response.add("Access-Control-Allow-Headers", "Content-Type, api_key, Authorization");
@@ -113,6 +114,7 @@ class AuthRequestHandler : public HTTPRequestHandler {
 
             try {
                 if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET) {
+                    std::cout << "into get" << std::endl;
                     if (hasSubstr(request.getURI(), "/sign/in")) {
                         std::string scheme;
                         std::string info;
@@ -132,6 +134,7 @@ class AuthRequestHandler : public HTTPRequestHandler {
                             throw validation_exception("Only basic auth accepted");
                         }
                     } else if (hasSubstr(request.getURI(), "/validate")) {
+                        std::cout << "into validation" << std::endl;
                         std::string scheme;
                         std::string token;
 
@@ -236,8 +239,9 @@ class HTTPAuthRequestFactory : public HTTPRequestHandlerFactory {
         HTTPRequestHandler *createRequestHandler([[maybe_unused]] const HTTPServerRequest &request){
             std::cout << "request [" << request.getMethod() << "] " << request.getURI() << std::endl;
 
-            if (request.getURI().rfind("/auth") == 0 || 
-                (request.getURI().rfind("http") == 0 && hasSubstr(request.getURI(), "/auth"))) {
+            if (hasSubstr(request.getURI(), "/auth/sign/up") ||
+                hasSubstr(request.getURI(), "/auth/sign/in") ||
+                hasSubstr(request.getURI(), "/auth/validate")) {
                 return new AuthRequestHandler(_format);
             }  
             return 0;

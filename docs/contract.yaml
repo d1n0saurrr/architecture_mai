@@ -93,7 +93,7 @@ paths:
 
   /user:
     servers:
-      - url: http://localhost:8081/
+      - url: http://localhost:8082/
     get:
       summary: Get user by id
       parameters:
@@ -138,7 +138,7 @@ paths:
   
   /user/search:
     servers: 
-      - url: http://localhost:8081/
+      - url: http://localhost:8082/
     get:
       summary: Search users
       parameters:
@@ -193,7 +193,92 @@ paths:
       security:
         - bearerAuth: []
 
+  /user/route/create:
+    servers: 
+      - url: http://localhost:8082/
+    post:
+        summary: Route creation
+        requestBody:
+          description: New route fields
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - name
+                  - route
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  route:
+                    $ref: '#/components/schemas/route'
+        responses:
+          201:
+            description: Route created
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+          401:
+            $ref: '#/components/responses/UnauthorizedError'
+          500:
+            $ref: '#/components/responses/InternalServerException'
+
+  /user/route:
+      servers: 
+        - url: http://localhost:8082/
+      post:
+          summary: Route creation
+          requestBody:
+            description: New route fields
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - id
+                    - name
+                    - route
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    route:
+                      $ref: '#/components/schemas/route'
+          responses:
+            201:
+              description: Route created
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+            400:
+              $ref: '#/components/responses/NotFoundException'
+            401:
+              $ref: '#/components/responses/UnauthorizedError'
+            500:
+              $ref: '#/components/responses/InternalServerException'
+            
+
 components:
+  schemas:
+    route:
+      description: Array of route points
+      type: array
+      items:
+        type: string
   responses:
     UnauthorizedError:
       description: Session token validation failed or bad user credits

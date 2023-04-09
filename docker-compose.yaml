@@ -44,6 +44,28 @@ services:
     depends_on:
       db_node_01:
         condition: service_healthy
+
+  user_service:
+    build:
+      context: ./
+      dockerfile: ./user_service/Dockerfile
+    container_name: user_service
+    environment:
+      DB_HOST: db_node_01
+      DB_PORT: ${DB_PORT}
+      DB_LOGIN: ${DB_LOGIN}
+      DB_PASSWORD: ${DB_LOGIN}
+      DB_DATABASE: ${DB_DATABASE}
+      USER_SERVICE_PORT: ${USER_SERVICE_PORT}
+      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT}
+      AUTH_SERVICE_HOST: auth_service
+    ports:
+      - ${USER_SERVICE_PORT}:${USER_SERVICE_PORT}
+    networks:
+      - arch-network
+    depends_on:
+      db_node_01:
+        condition: service_healthy
   
 volumes:
   db-node-01-data:
