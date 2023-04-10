@@ -1,0 +1,370 @@
+{
+	"info": {
+		"_postman_id": "d9372e4a-7c84-44f7-a4cb-23cb94067dcc",
+		"name": "arch_lab",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13646256"
+	},
+	"item": [
+		{
+			"name": "add_user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"login\": \"user321\",\r\n  \"password\": \"1234\",\r\n  \"email\": \"string@string\",\r\n  \"firstName\": \"Name\",\r\n  \"lastName\": \"Surname\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/auth/sign/up",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"auth",
+						"sign",
+						"up"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_token",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "test_user",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/auth/sign/in",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"auth",
+						"sign",
+						"in"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "validate_token",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODEwNDc4OTEuOTM1NDc3LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.I9DSJiQ6rEX2LJ7vN_6-AmbrW_0iAoeFQKZza4kBLJI",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/auth/validate",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"auth",
+						"validate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_user_by_id",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODEwNDgwMTYuMDIzNzI5LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.gMNyY743mhPks5VCdaNB_-nKY56elraW6nDBsyQYIgk",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8082/user?id=2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8082",
+					"path": [
+						"user"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "user_search",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODEwNDgwMTYuMDIzNzI5LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.gMNyY743mhPks5VCdaNB_-nKY56elraW6nDBsyQYIgk",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8082/user/search?login=user",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8082",
+					"path": [
+						"user",
+						"search"
+					],
+					"query": [
+						{
+							"key": "first_name",
+							"value": "Name",
+							"disabled": true
+						},
+						{
+							"key": "last_name",
+							"value": "Surname",
+							"disabled": true
+						},
+						{
+							"key": "email",
+							"value": "string@string",
+							"disabled": true
+						},
+						{
+							"key": "login",
+							"value": "user"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add_route",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODExNDcxODAuMTAxOTIsImlkIjoyLCJsb2dpbiI6InVzZXIiLCJzdWIiOiJsb2dpbiJ9.hs4Li1DNSlzeaAOaPwWDFghmAxsJ3uGr90qqOrXgmk0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"route123\",\r\n    \"points\": [\r\n        \"point1\",\r\n        \"point2\",\r\n        \"route3\"\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8082/user/route/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8082",
+					"path": [
+						"user",
+						"route",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_user_routes",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODEwNDg0NjcuMDczNTI0LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.wR3nxSd2UxGBEHfitfiQzfFkLqEA8joEkFnPp4x9L0U",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8082/user/route?id=2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8082",
+					"path": [
+						"user",
+						"route"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add_trip",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODExNjA0MTguMzI5NzA3LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.znVY2BODZvx1DTemUk02heVXu2OGrzha8qMzSwysLXk",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"authorId\": 2,\r\n  \"name\": \"to work\",\r\n  \"description\": \"going to work\",\r\n  \"routeId\": 1,\r\n  \"date\": \"2023-04-10 21:07:03\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8083/trip",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"trip"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_trip_by_id",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODExNjA0MTguMzI5NzA3LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.znVY2BODZvx1DTemUk02heVXu2OGrzha8qMzSwysLXk",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8083/trip?id=3",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"trip"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "3"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_trips",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODExNjA0MTguMzI5NzA3LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.znVY2BODZvx1DTemUk02heVXu2OGrzha8qMzSwysLXk",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8083/trips",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"trips"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

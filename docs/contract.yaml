@@ -285,6 +285,8 @@ paths:
                   routeId:
                     type: integer
                   date:
+                    description: DateTime format - [YYYY-mm-dd HH:MM:ss]
+                    example: "2023-04-10 21:07:03"
                     type: string
                     format: date-time
         responses:

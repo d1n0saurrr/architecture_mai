@@ -27,8 +27,8 @@ services:
 
   auth_service:
     build:
-      context: ./
-      dockerfile: ./auth_service/Dockerfile
+      context: auth_service
+      dockerfile: Dockerfile
     container_name: auth_service
     environment:
       DB_HOST: db_node_01
@@ -47,8 +47,8 @@ services:
 
   user_service:
     build:
-      context: ./
-      dockerfile: ./user_service/Dockerfile
+      context: user_service
+      dockerfile: Dockerfile
     container_name: user_service
     environment:
       DB_HOST: db_node_01
@@ -69,8 +69,8 @@ services:
 
   trip_service:
     build:
-      context: ./
-      dockerfile: ./trip_service/Dockerfile
+      context: trip_service
+      dockerfile: Dockerfile
     container_name: trip_service
     environment:
       DB_HOST: db_node_01
