@@ -18,8 +18,8 @@ insert into user (login, password, role, first_name, last_name, email, tel) valu
 create table route (
     id int not null AUTO_INCREMENT,
     author_id int not null references user(id),
-    points JSON not null,
     name varchar(128),
+    points JSON not null,
     deleted boolean not null default false,
     primary key(id)
 );

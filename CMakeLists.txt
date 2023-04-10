@@ -44,7 +44,8 @@ target_link_libraries(${AUTH_SERVICE} PRIVATE
 add_executable(${USER_SERVICE} user_main.cpp 
     config/config.cpp 
     database/database.cpp 
-    database/user.cpp)
+    database/user.cpp
+    database/route.cpp)
 target_include_directories(${USER_SERVICE} PRIVATE "${CMAKE_BINARY_DIR}")
 target_compile_options(${USER_SERVICE} PRIVATE -Wall -Wextra -pedantic -Werror )
 set_target_properties(${USER_SERVICE} PROPERTIES LINKER_LANGUAGE CXX)

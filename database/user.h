@@ -17,9 +17,6 @@ namespace database {
             std::string _email;
             std::string _tel;
             bool _deleted;
-
-            void insert_entity();
-            void update_entity();
         public:
             static User fromJson(const std::string &json);
             Poco::JSON::Object::Ptr toJSON() const;

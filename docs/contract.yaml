@@ -206,12 +206,9 @@ paths:
               schema:
                 type: object
                 required:
-                  - id
                   - name
                   - route
                 properties:
-                  id:
-                    type: integer
                   name:
                     type: string
                   route:
@@ -230,30 +227,21 @@ paths:
             $ref: '#/components/responses/UnauthorizedError'
           500:
             $ref: '#/components/responses/InternalServerException'
+        security:
+          - bearerAuth: []
 
   /user/route:
       servers: 
         - url: http://localhost:8082/
-      post:
-          summary: Route creation
-          requestBody:
-            description: New route fields
-            required: true
-            content:
-              application/json:
-                schema:
-                  type: object
-                  required:
-                    - id
-                    - name
-                    - route
-                  properties:
-                    id:
-                      type: integer
-                    name:
-                      type: string
-                    route:
-                      $ref: '#/components/schemas/route'
+      get:
+          summary: Get user routes
+          parameters:
+            - name: id
+              description: User id
+              required: true
+              in: query
+              schema:
+                type: integer
           responses:
             201:
               description: Route created
@@ -270,6 +258,8 @@ paths:
               $ref: '#/components/responses/UnauthorizedError'
             500:
               $ref: '#/components/responses/InternalServerException'
+          security:
+            - bearerAuth: []
             
 
 components:

@@ -1,5 +1,5 @@
-#ifndef AUTH_REST_H
-#define AUTH_REST_H
+#ifndef USER_REST_H
+#define USER_REST_H
 
 
 #include "Poco/Net/HTTPServer.h"
@@ -92,6 +92,7 @@ using Poco::Util::ServerApplication;
 #include <string>
 #include <fstream>
 #include "../database/user.h"
+#include "../database/route.h"
 #include "../utils/exceptions.h"
 #include "../utils/request.h"
 
@@ -155,6 +156,34 @@ class UserRequestHandler : public HTTPRequestHandler {
                         response.setContentType("application/json");
                         std::ostream &ostr = response.send();
                         Poco::JSON::Stringifier::stringify(arr, ostr);
+                    } else if (hasSubstr(request.getURI(), "/user/route")) {
+                        const Poco::URI uri(request.getURI());
+                        const Poco::URI::QueryParameters params = uri.getQueryParameters();
+                        int user_id;
+                        for (std::pair<std::string, std::string> key_value: params) {
+                            if (key_value.first == "id") {
+                                user_id = stoi(key_value.second);
+                            }
+                        }
+
+                        database::User user = database::User::get_by_id(user_id);
+                        if (user.get_id() == -1) {
+                            throw not_found_exception("There is no user with id = " + id);
+                        }
+
+                        std::cout << "Found user: " << user << std::endl;
+                        std::vector<database::Route> result = database::Route::get_routes(user.get_id());
+                        std::cout << "Found total routes" << result.size() << std::endl;
+
+                        Poco::JSON::Array arr;
+                        for (database::Route route: result) {
+                            arr.add(route.toJSON());
+                        }
+                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                        response.setChunkedTransferEncoding(true);
+                        response.setContentType("application/json");
+                        std::ostream &ostr = response.send();
+                        Poco::JSON::Stringifier::stringify(arr, ostr);
                     } else if (hasSubstr(request.getURI(), "/user")) {
                         const Poco::URI uri(request.getURI());
                         const Poco::URI::QueryParameters params = uri.getQueryParameters();
@@ -176,6 +205,28 @@ class UserRequestHandler : public HTTPRequestHandler {
                         response.setContentType("application/json");
                         std::ostream &ostr = response.send();
                         Poco::JSON::Stringifier::stringify(user.toJSON(), ostr);
+                    }
+                }
+
+                if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST) {
+                    if (hasSubstr(request.getURI(), "/user/route/create")) {
+                        std::string body = extractBody(request.stream(), request.getContentLength());
+                        if (body.length() == 0) {
+                            throw validation_exception("Body is missing");
+                        }
+                        database::Route route = database::Route::fromJson(body);
+                        route.author_id() = id;
+
+                        std::cout << "Creating new route: " << body << std::endl;
+                        route.save_to_db();
+                        long route_id = route.get_id();
+                        response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_CREATED);
+                        response.setChunkedTransferEncoding(true);
+                        response.setContentType("application/json");
+                        Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+                        root->set("id", route_id);
+                        std::ostream &ostr = response.send();
+                        Poco::JSON::Stringifier::stringify(root, ostr);
                     }
                 }
             } catch (validation_exception &ex) {
@@ -247,7 +298,8 @@ class HTTPUserRequestFactory : public HTTPRequestHandlerFactory {
             std::cout << "request [" << request.getMethod() << "] " << request.getURI() << std::endl;
 
             if (hasSubstr(request.getURI(), "/user?") ||
-                hasSubstr(request.getURI(), "/user/search")) {
+                hasSubstr(request.getURI(), "/user/search") ||
+                hasSubstr(request.getURI(), "/user/route")) {
                 return new UserRequestHandler(_format);
             }
             return 0;

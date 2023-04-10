@@ -144,7 +144,7 @@ namespace database {
                 conditions.push_back("lower(first_name) like '%" + like_user.get_last_name() + "%'");
             }
 
-            select << "select id, login, email, tel, first_name, last_name, role, deleted from "  << TABLE_NAME << " where deleted = false",
+            select << "select id, login, email, tel, first_name, last_name, role from "  << TABLE_NAME << " where deleted = false",
                 into(user._id),
                 into(user._login),
                 into(user._email),
@@ -152,7 +152,6 @@ namespace database {
                 into(user._first_name),
                 into(user._last_name),
                 into(user._role),
-                into(user._deleted),
                 range(0, 1);
 
             if (conditions.size() > 0) {
@@ -223,6 +222,7 @@ namespace database {
     std::ostream& operator<<(std::ostream& os, const User& user)
     {
         return os << "("
+                << user.get_id() << ", "
                 << user.get_login() << ", "
                 << user.get_password() << ", "
                 << user.get_email() << ", "
