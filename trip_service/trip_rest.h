@@ -93,12 +93,13 @@ using Poco::Util::ServerApplication;
 #include <fstream>
 #include "../database/user.h"
 #include "../database/route.h"
+#include "../database/trip.h"
 #include "../utils/exceptions.h"
 #include "../utils/request.h"
 
-class UserRequestHandler : public HTTPRequestHandler {
+class TripRequestHandler : public HTTPRequestHandler {
     public:
-        UserRequestHandler(const std::string &format): _format(format){};
+        TripRequestHandler(const std::string &format): _format(format){};
 
         void handleRequest(HTTPServerRequest &request, HTTPServerResponse &response) {
             response.add("Access-Control-Allow-Origin", "*");
@@ -126,105 +127,61 @@ class UserRequestHandler : public HTTPRequestHandler {
                 std::cout << "Authorized user " << login << std::endl;
 
                 if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET) {
-                    if (hasSubstr(request.getURI(), "/search")) {
-                        const Poco::URI uri(request.getURI());
-                        const Poco::URI::QueryParameters params = uri.getQueryParameters();
-                        database::User likeUser;
-                        for (std::pair<std::string, std::string> key_value: params) {
-                            if (key_value.first == "login") {
-                                likeUser.login() = key_value.second;
-                            } else if (key_value.first == "first_name") {
-                                likeUser.first_name() = key_value.second;
-                            } else if (key_value.first == "last_name") {
-                                likeUser.last_name() = key_value.second;
-                            } else if (key_value.first == "email") {
-                                likeUser.email() = key_value.second;
-                            } else {
-                                std::cout << "Param " << key_value.first << " :: " << key_value.second << " ignored" << std::endl;
-                            }
-                        }
-
-                        std::vector<database::User> result = database::User::search(likeUser);
+                    if (hasSubstr(request.getURI(), "/trips")) {
+                        std::vector<database::Trip> result = database::Trip::get_trips();
                         std::cout << "Found total " << result.size() << std::endl;
 
                         Poco::JSON::Array arr;
-                        for (database::User user: result) {
-                            arr.add(user.toJSON());
+                        for (database::Trip trip: result) {
+                            arr.add(trip.toJSON());
                         }
                         response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
                         response.setChunkedTransferEncoding(true);
                         response.setContentType("application/json");
                         std::ostream &ostr = response.send();
                         Poco::JSON::Stringifier::stringify(arr, ostr);
-                    } else if (hasSubstr(request.getURI(), "/route")) {
+                    } else if (hasSubstr(request.getURI(), "/trip")) {
                         const Poco::URI uri(request.getURI());
                         const Poco::URI::QueryParameters params = uri.getQueryParameters();
-                        int user_id;
-                        for (std::pair<std::string, std::string> key_value: params) {
+                        int trip_id;
+                        for (std::pair<std::string, std::string> key_value : params) {
                             if (key_value.first == "id") {
-                                user_id = stoi(key_value.second);
+                                trip_id = stoi(key_value.second);
                             }
                         }
 
-                        database::User user = database::User::get_by_id(user_id);
-                        if (user.get_id() == -1) {
-                            throw not_found_exception("There is no user with id = " + id);
+                        database::Trip trip = database::Trip::get_by_id(trip_id);
+                        if (trip.get_id() == -1) {
+                            throw not_found_exception("There is no trip with id = " + id);
                         }
 
-                        std::cout << "Found user: " << user << std::endl;
-                        std::vector<database::Route> result = database::Route::get_routes(user.get_id());
-                        std::cout << "Found total routes" << result.size() << std::endl;
+                        std::cout << "Found trip: " << trip.toJSON() << std::endl;
 
-                        Poco::JSON::Array arr;
-                        for (database::Route route: result) {
-                            arr.add(route.toJSON());
-                        }
                         response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
                         response.setChunkedTransferEncoding(true);
                         response.setContentType("application/json");
                         std::ostream &ostr = response.send();
-                        Poco::JSON::Stringifier::stringify(arr, ostr);
-                    } else if (hasSubstr(request.getURI(), "/user")) {
-                        const Poco::URI uri(request.getURI());
-                        const Poco::URI::QueryParameters params = uri.getQueryParameters();
-                        int id;
-                        for (std::pair<std::string, std::string> key_value: params) {
-                            if (key_value.first == "id") {
-                                id = stoi(key_value.second);
-                            }
-                        }
-
-                        database::User user = database::User::get_by_id(id);
-                        if (user.get_id() == -1) {
-                            throw not_found_exception("There is no user with id = " + id);
-                        }
-
-                        std::cout << "Found user: " << user << std::endl;
-                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-                        response.setChunkedTransferEncoding(true);
-                        response.setContentType("application/json");
-                        std::ostream &ostr = response.send();
-                        Poco::JSON::Stringifier::stringify(user.toJSON(), ostr);
+                        Poco::JSON::Stringifier::stringify(trip.toJSON(), ostr);
                     }
                 }
 
                 if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST) {
-                    if (hasSubstr(request.getURI(), "/route")) {
+                    if (hasSubstr(request.getURI(), "/trip")) {
                         std::string body = extractBody(request.stream(), request.getContentLength());
                         if (body.length() == 0) {
                             throw validation_exception("Body is missing");
                         }
-                        database::Route route = database::Route::fromJson(body);
-                        route.author_id() = id;
+                        database::Trip trip = database::Trip::fromJson(body);
+                        trip.author_id() = id;
 
-                        std::cout << "Creating new route: " << body << std::endl;
-                        route.save_to_db();
-                        long route_id = route.get_id();
+                        std::cout << "Creating new trip: " << body << std::endl;
+                        trip.save_to_db();
+                        long trip_id = trip.get_id();
                         response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_CREATED);
                         response.setChunkedTransferEncoding(true);
                         response.setContentType("application/json");
                         Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-                        root->set("id", route_id);
+                        root->set("id", trip_id);
                         std::ostream &ostr = response.send();
                         Poco::JSON::Stringifier::stringify(root, ostr);
                     }
@@ -291,15 +248,15 @@ class UserRequestHandler : public HTTPRequestHandler {
         std::string _format;
 };
 
-class HTTPUserRequestFactory : public HTTPRequestHandlerFactory {
+class HTTPTripRequestFactory : public HTTPRequestHandlerFactory {
     public:
-        HTTPUserRequestFactory(const std::string &format) : _format(format){}
+        HTTPTripRequestFactory(const std::string &format) : _format(format){}
         HTTPRequestHandler *createRequestHandler([[maybe_unused]] const HTTPServerRequest &request){
             std::cout << "request [" << request.getMethod() << "] " << request.getURI() << std::endl;
 
-            if (hasSubstr(request.getURI(), "/user") ||
-                hasSubstr(request.getURI(), "/route")) {
-                return new UserRequestHandler(_format);
+            if (hasSubstr(request.getURI(), "/trip") ||
+                hasSubstr(request.getURI(), "/trips")) {
+                return new TripRequestHandler(_format);
             }
             return 0;
         }
@@ -307,10 +264,10 @@ class HTTPUserRequestFactory : public HTTPRequestHandlerFactory {
         std::string _format;
 };
 
-class HTTPUserWebServer : public Poco::Util::ServerApplication {
+class HTTPTripWebServer : public Poco::Util::ServerApplication {
     public:
-        HTTPUserWebServer() : _helpRequested(false){}
-        ~HTTPUserWebServer() {}
+        HTTPTripWebServer() : _helpRequested(false){}
+        ~HTTPTripWebServer() {}
     protected:
         void initialize(Application &self) {
             loadConfiguration();
@@ -321,8 +278,8 @@ class HTTPUserWebServer : public Poco::Util::ServerApplication {
         }
         int main([[maybe_unused]] const std::vector<std::string> &args) {
             const char * portValue = "8080";
-            if (std::getenv("USER_SERVICE_PORT") != nullptr) {
-                portValue = std::getenv("USER_SERVICE_PORT");
+            if (std::getenv("TRIP_SERVICE_PORT") != nullptr) {
+                portValue = std::getenv("TRIP_SERVICE_PORT");
             }
 
             if (strlen(portValue) == 0) {
@@ -332,12 +289,12 @@ class HTTPUserWebServer : public Poco::Util::ServerApplication {
 
             if (!_helpRequested) {
                 ServerSocket svs(Poco::Net::SocketAddress("0.0.0.0", atoi(portValue)));
-                HTTPServer srv(new HTTPUserRequestFactory(DateTimeFormat::SORTABLE_FORMAT), svs, new HTTPServerParams);
+                HTTPServer srv(new HTTPTripRequestFactory(DateTimeFormat::SORTABLE_FORMAT), svs, new HTTPServerParams);
                 srv.start();
-                std::cout << "user server started on port " << portValue << std::endl;
+                std::cout << "trip server started on port " << portValue << std::endl;
                 waitForTerminationRequest();
                 srv.stop();
-                std::cout << "user server stoped" << std::endl;
+                std::cout << "trip server stoped" << std::endl;
             }
             return Application::EXIT_OK;
         }

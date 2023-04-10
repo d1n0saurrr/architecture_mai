@@ -122,7 +122,7 @@ namespace database {
         Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
 
         root->set("id", _id);
-        root->set("author_id", _author_id);
+        root->set("authorId", _author_id);
         root->set("name", _name);
         root->set("points", _points);
         root->set("deleted", _deleted);
@@ -145,11 +145,11 @@ namespace database {
         Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
         
         route.id() = getOrDefault<long>(object, "id", 0);
-        route.author_id() = getOrDefault<long>(object, "authorId", 0);
+        route.author_id() = getOrDefault<long>(object, "authorId", -1);
         route.name() = getOrDefault<std::string>(object, "name", "");
         route.deleted() = getOrDefault<bool>(object, "deleted", false);
         std::vector<std::string> points_vector = std::vector<std::string>{};
-        Poco::JSON::Array::Ptr points = object->getArray("route");
+        Poco::JSON::Array::Ptr points = object->getArray("points");
         Poco::JSON::Array::ConstIterator it;
         for (it = points->begin(); it != points->end(); ++it) {
             points_vector.push_back(it->toString());

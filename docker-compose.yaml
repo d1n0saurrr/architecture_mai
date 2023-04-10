@@ -66,6 +66,29 @@ services:
     depends_on:
       db_node_01:
         condition: service_healthy
+
+  trip_service:
+    build:
+      context: ./
+      dockerfile: ./trip_service/Dockerfile
+    container_name: trip_service
+    environment:
+      DB_HOST: db_node_01
+      DB_PORT: ${DB_PORT}
+      DB_LOGIN: ${DB_LOGIN}
+      DB_PASSWORD: ${DB_LOGIN}
+      DB_DATABASE: ${DB_DATABASE}
+      TRIP_SERVICE_PORT: ${TRIP_SERVICE_PORT}
+      USER_SERVICE_PORT: ${USER_SERVICE_PORT}
+      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT}
+      AUTH_SERVICE_HOST: auth_service
+    ports:
+      - ${TRIP_SERVICE_PORT}:${TRIP_SERVICE_PORT}
+    networks:
+      - arch-network
+    depends_on:
+      db_node_01:
+        condition: service_healthy
   
 volumes:
   db-node-01-data:

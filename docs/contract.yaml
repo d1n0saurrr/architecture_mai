@@ -193,7 +193,7 @@ paths:
       security:
         - bearerAuth: []
 
-  /user/route/create:
+  /route:
     servers: 
       - url: http://localhost:8082/
     post:
@@ -207,12 +207,12 @@ paths:
                 type: object
                 required:
                   - name
-                  - route
+                  - points
                 properties:
                   name:
                     type: string
-                  route:
-                    $ref: '#/components/schemas/route'
+                  points:
+                    $ref: '#/components/schemas/points'
         responses:
           201:
             description: Route created
@@ -229,11 +229,7 @@ paths:
             $ref: '#/components/responses/InternalServerException'
         security:
           - bearerAuth: []
-
-  /user/route:
-      servers: 
-        - url: http://localhost:8082/
-      get:
+    get:
           summary: Get user routes
           parameters:
             - name: id
@@ -260,15 +256,121 @@ paths:
               $ref: '#/components/responses/InternalServerException'
           security:
             - bearerAuth: []
-            
+    
+  /trip:
+    servers: 
+      - url: http://localhost:8083/
+    post:
+        summary: Trip creation
+        requestBody:
+          description: New trip fields
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - authorId
+                  - name
+                  - description
+                  - routeId
+                  - date
+                properties:
+                  authorId:
+                    type: integer
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  routeId:
+                    type: integer
+                  date:
+                    type: string
+                    format: date-time
+        responses:
+          201:
+            description: Trip created
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+          401:
+            $ref: '#/components/responses/UnauthorizedError'
+          500:
+            $ref: '#/components/responses/InternalServerException'
+        security:
+          - bearerAuth: []
+    get:
+        summary: Get trip
+        parameters:
+          - name: id
+            description: Trip id
+            in: query
+            required: true
+            schema:
+              type: integer
+        responses:
+          200:
+            description: Trip fields
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/trip'
+          401:
+            $ref: '#/components/responses/UnauthorizedError'
+          500:
+            $ref: '#/components/responses/InternalServerException'
+        security:
+          - bearerAuth: []
+    
+  /trips:
+    servers: 
+      - url: http://localhost:8083/
+    get:
+        summary: All trips
+        responses:
+          200:
+            description: Trips
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/trip'
+          401:
+            $ref: '#/components/responses/UnauthorizedError'
+          500:
+            $ref: '#/components/responses/InternalServerException'
+        security:
+          - bearerAuth: []
+                    
 
 components:
   schemas:
-    route:
+    points:
       description: Array of route points
       type: array
       items:
         type: string
+    trip:
+      description: Trip fields
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        route_id:
+          type: integer
+        date:
+          type: string
+          format: date-time
+
   responses:
     UnauthorizedError:
       description: Session token validation failed or bad user credits
