@@ -11,6 +11,7 @@
 
 #include <sstream>
 #include <exception>
+#include "../utils/json.h"
 
 #define TABLE_NAME "route"
 
@@ -24,20 +25,23 @@ namespace database {
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement select(session);
             Route route;
+            std::string points_str;
 
             select << "select id, author_id, name, points, deleted from "  << TABLE_NAME << " where id = ?",
                 into(route._id),
                 into(route._author_id),
                 into(route._name),
-                into(route._points),
+                into(points_str),
                 into(route._deleted),
                 use(id),
                 range(0, 1);
         
             select.execute();
             Poco::Data::RecordSet rs(select);
-            if (rs.moveFirst())
+            if (rs.moveFirst()) {
+                route.points() = pointsFromJson(points_str);
                 return route;
+            }
 
             return Route::empty();
         } catch (Poco::Data::MySQL::ConnectionException &e) {
@@ -123,21 +127,23 @@ namespace database {
 
         root->set("id", _id);
         root->set("authorId", _author_id);
-        root->set("name", _name);
-        root->set("points", _points);
-        root->set("deleted", _deleted);
+        if (_name != "")
+            root->set("name", _name);
+        if (!_deleted)
+            root->set("deleted", _deleted);
 
+        Poco::JSON::Array::Ptr arr = new Poco::JSON::Array();
+        for (std::string point : _points)
+            arr->add(point);
+
+        if (_points.size() > 0)
+            root->set("points", arr);
+
+        std::ostringstream os;
+        Poco::JSON::Stringifier::stringify(arr, os);
         return root;
     }
-
-    template<typename T>
-    T getOrDefault(Poco::JSON::Object::Ptr object, std::string field, T defaultValue) {
-        if (object->has(field)) {
-            return object->getValue<T>(field);
-        }
-        return defaultValue;
-    }
-
+    
     Route Route::fromJson(const std::string &str) {
         Route route;
         Poco::JSON::Parser parser;
@@ -197,7 +203,7 @@ namespace database {
                 << route.get_id() << ", "
                 << route.get_author_id() << ", "
                 << route.get_name() << ", ["
-                << points_str << "], "
+                << points_str << "] "
                 << ")";
     }
 

@@ -157,22 +157,7 @@ class UserRequestHandler : public HTTPRequestHandler {
                         std::ostream &ostr = response.send();
                         Poco::JSON::Stringifier::stringify(arr, ostr);
                     } else if (hasSubstr(request.getURI(), "/route")) {
-                        const Poco::URI uri(request.getURI());
-                        const Poco::URI::QueryParameters params = uri.getQueryParameters();
-                        int user_id;
-                        for (std::pair<std::string, std::string> key_value: params) {
-                            if (key_value.first == "id") {
-                                user_id = stoi(key_value.second);
-                            }
-                        }
-
-                        database::User user = database::User::get_by_id(user_id);
-                        if (user.get_id() == -1) {
-                            throw not_found_exception("There is no user with id = " + id);
-                        }
-
-                        std::cout << "Found user: " << user << std::endl;
-                        std::vector<database::Route> result = database::Route::get_routes(user.get_id());
+                        std::vector<database::Route> result = database::Route::get_routes(id);
                         std::cout << "Found total routes" << result.size() << std::endl;
 
                         Poco::JSON::Array arr;

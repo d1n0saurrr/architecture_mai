@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"login\": \"user321\",\r\n  \"password\": \"1234\",\r\n  \"email\": \"string@string\",\r\n  \"firstName\": \"Name\",\r\n  \"lastName\": \"Surname\"\r\n}",
+					"raw": "{\r\n  \"login\": \"user321\",\r\n  \"password\": \"1234\",\r\n  \"email\": \"string@string\",\r\n  \"tel\": \"+023913821\",\r\n  \"firstName\": \"Name\",\r\n  \"lastName\": \"Surname\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -44,7 +44,7 @@
 					"basic": [
 						{
 							"key": "username",
-							"value": "test_user",
+							"value": "user321",
 							"type": "string"
 						},
 						{
@@ -80,7 +80,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODEwNDc4OTEuOTM1NDc3LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.I9DSJiQ6rEX2LJ7vN_6-AmbrW_0iAoeFQKZza4kBLJI",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODE0NzIwMDIuODkwODAyLCJpZCI6NCwibG9naW4iOiJ1c2VyMzIxIiwic3ViIjoibG9naW4ifQ.jdy-qvU3mbcFbL_KaIu9pIOaLtqpVirNZTjN8MpIARs",
 							"type": "string"
 						}
 					]
@@ -110,7 +110,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODEwNDgwMTYuMDIzNzI5LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.gMNyY743mhPks5VCdaNB_-nKY56elraW6nDBsyQYIgk",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODE0NzcwMDEuOTI5ODIxLCJpZCI6NCwibG9naW4iOiJ1c2VyMTIzIiwic3ViIjoibG9naW4ifQ.-EMY-2H0ugiCC4CmhlrhxQKOLkuN8WqvoPTNlPHHfIU",
 							"type": "string"
 						}
 					]
@@ -118,7 +118,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8082/user?id=2",
+					"raw": "http://localhost:8082/user?id=4",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -130,7 +130,7 @@
 					"query": [
 						{
 							"key": "id",
-							"value": "2"
+							"value": "4"
 						}
 					]
 				}
@@ -145,7 +145,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODEwNDgwMTYuMDIzNzI5LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.gMNyY743mhPks5VCdaNB_-nKY56elraW6nDBsyQYIgk",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODE0NzIwMDIuODkwODAyLCJpZCI6NCwibG9naW4iOiJ1c2VyMzIxIiwic3ViIjoibG9naW4ifQ.jdy-qvU3mbcFbL_KaIu9pIOaLtqpVirNZTjN8MpIARs",
 							"type": "string"
 						}
 					]
@@ -196,7 +196,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODExNDcxODAuMTAxOTIsImlkIjoyLCJsb2dpbiI6InVzZXIiLCJzdWIiOiJsb2dpbiJ9.hs4Li1DNSlzeaAOaPwWDFghmAxsJ3uGr90qqOrXgmk0",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODE0NzIwMDIuODkwODAyLCJpZCI6NCwibG9naW4iOiJ1c2VyMzIxIiwic3ViIjoibG9naW4ifQ.jdy-qvU3mbcFbL_KaIu9pIOaLtqpVirNZTjN8MpIARs",
 							"type": "string"
 						}
 					]
@@ -205,7 +205,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"name\": \"route123\",\r\n    \"points\": [\r\n        \"point1\",\r\n        \"point2\",\r\n        \"route3\"\r\n    ]\r\n}",
+					"raw": "{\r\n    \"name\": \"route for user321\",\r\n    \"points\": [\r\n        \"point1\",\r\n        \"point2\",\r\n        \"route3\"\r\n    ]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -213,7 +213,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8082/user/route/create",
+					"raw": "http://localhost:8082/user/route",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -221,8 +221,7 @@
 					"port": "8082",
 					"path": [
 						"user",
-						"route",
-						"create"
+						"route"
 					]
 				}
 			},
@@ -236,7 +235,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODEwNDg0NjcuMDczNTI0LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.wR3nxSd2UxGBEHfitfiQzfFkLqEA8joEkFnPp4x9L0U",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODE0NzIwMDIuODkwODAyLCJpZCI6NCwibG9naW4iOiJ1c2VyMzIxIiwic3ViIjoibG9naW4ifQ.jdy-qvU3mbcFbL_KaIu9pIOaLtqpVirNZTjN8MpIARs",
 							"type": "string"
 						}
 					]
@@ -244,7 +243,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8082/user/route?id=2",
+					"raw": "http://localhost:8082/user/route",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -253,12 +252,6 @@
 					"path": [
 						"user",
 						"route"
-					],
-					"query": [
-						{
-							"key": "id",
-							"value": "2"
-						}
 					]
 				}
 			},
@@ -272,7 +265,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODExNjA0MTguMzI5NzA3LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.znVY2BODZvx1DTemUk02heVXu2OGrzha8qMzSwysLXk",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODE0NzIwMDIuODkwODAyLCJpZCI6NCwibG9naW4iOiJ1c2VyMzIxIiwic3ViIjoibG9naW4ifQ.jdy-qvU3mbcFbL_KaIu9pIOaLtqpVirNZTjN8MpIARs",
 							"type": "string"
 						}
 					]
@@ -281,7 +274,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"authorId\": 2,\r\n  \"name\": \"to work\",\r\n  \"description\": \"going to work\",\r\n  \"routeId\": 1,\r\n  \"date\": \"2023-04-10 21:07:03\"\r\n}",
+					"raw": "{\r\n  \"name\": \"to work\",\r\n  \"description\": \"going to work\",\r\n  \"routeId\": 2,\r\n  \"date\": \"2023-04-10 21:07:03\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -310,7 +303,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODExNjA0MTguMzI5NzA3LCJpZCI6MiwibG9naW4iOiJ1c2VyIiwic3ViIjoibG9naW4ifQ.znVY2BODZvx1DTemUk02heVXu2OGrzha8qMzSwysLXk",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODE0NzIwMDIuODkwODAyLCJpZCI6NCwibG9naW4iOiJ1c2VyMzIxIiwic3ViIjoibG9naW4ifQ.jdy-qvU3mbcFbL_KaIu9pIOaLtqpVirNZTjN8MpIARs",
 							"type": "string"
 						}
 					]
@@ -318,7 +311,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8083/trip?id=3",
+					"raw": "http://localhost:8083/trip?id=1",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -330,7 +323,7 @@
 					"query": [
 						{
 							"key": "id",
-							"value": "3"
+							"value": "1"
 						}
 					]
 				}
@@ -361,6 +354,45 @@
 					"port": "8083",
 					"path": [
 						"trips"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "joing_trip ",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"tripId\": 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8083/trip/joining",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"trip",
+						"joining"
 					]
 				}
 			},

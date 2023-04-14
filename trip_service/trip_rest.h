@@ -155,7 +155,7 @@ class TripRequestHandler : public HTTPRequestHandler {
                             throw not_found_exception("There is no trip with id = " + id);
                         }
 
-                        std::cout << "Found trip: " << trip.toJSON() << std::endl;
+                        std::cout << "Found trip: " << trip << std::endl;
 
                         response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
                         response.setChunkedTransferEncoding(true);
@@ -166,7 +166,35 @@ class TripRequestHandler : public HTTPRequestHandler {
                 }
 
                 if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST) {
-                    if (hasSubstr(request.getURI(), "/trip")) {
+                    if (hasSubstr(request.getURI(), "/trip/joining")) {
+                        std::string body = extractBody(request.stream(), request.getContentLength());
+                        if (body.length() == 0) {
+                            throw validation_exception("Body is missing");
+                        }
+
+                        Poco::JSON::Parser parser;
+                        Poco::Dynamic::Var result = parser.parse(body);
+                        Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
+                        long trip_id = object->getValue<long>("tripId");
+                        database::Trip trip = database::Trip::get_by_id(trip_id);
+                        if (trip.get_id() == -1) {
+                            throw not_found_exception("There is no trip with id = " + id);
+                        }
+
+                        std::cout << "Found trip: " << trip << std::endl;
+
+                        trip.add_passenger(id);
+
+                        std::cout << "User added to passengers of trip: " << trip.toJSON() << std::endl;
+
+                        database::Trip updated_trip = database::Trip::get_by_id(trip_id);
+                        response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_CREATED);
+                        response.setChunkedTransferEncoding(true);
+                        response.setContentType("application/json");
+                        std::ostream &ostr = response.send();
+                        Poco::JSON::Stringifier::stringify(updated_trip.toJSON(), ostr);
+                    }
+                    else if (hasSubstr(request.getURI(), "/trip")) {
                         std::string body = extractBody(request.stream(), request.getContentLength());
                         if (body.length() == 0) {
                             throw validation_exception("Body is missing");
@@ -255,6 +283,7 @@ class HTTPTripRequestFactory : public HTTPRequestHandlerFactory {
             std::cout << "request [" << request.getMethod() << "] " << request.getURI() << std::endl;
 
             if (hasSubstr(request.getURI(), "/trip") ||
+                hasSubstr(request.getURI(), "/trip/adding") ||
                 hasSubstr(request.getURI(), "/trips")) {
                 return new TripRequestHandler(_format);
             }

@@ -11,6 +11,7 @@
 
 #include <sstream>
 #include <exception>
+#include "../utils/json.h"
 
 #define TABLE_NAME "user"
 
@@ -49,10 +50,9 @@ namespace database {
             Poco::Data::Statement select(session);
             User user;
 
-            select << "select id, login, role, tel, first_name, last_name, email, deleted from "  << TABLE_NAME << " where id = ?",
+            select << "select id, login, first_name, last_name, email, tel, deleted from "  << TABLE_NAME << " where id = ?",
                 into(user._id),
                 into(user._login),
-                into(user._role),
                 into(user._first_name),
                 into(user._last_name),
                 into(user._email),
@@ -182,25 +182,24 @@ namespace database {
         Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
 
         root->set("id", _id);
-        root->set("login", _login);
-        root->set("email", _email);
-        root->set("tel", _tel);
-        root->set("firstName", _first_name);
-        root->set("lastName", _last_name);
-        root->set("deleted", _deleted);
+        if (_login != "")
+            root->set("login", _login);
+        if (_email != "")
+            root->set("email", _email);
+        if (_tel != "")
+            root->set("tel", _tel);
+        if (_first_name != "")
+            root->set("firstName", _first_name);
+        if (_last_name != "")
+            root->set("lastName", _last_name);
+        if (!_deleted)
+            root->set("deleted", _deleted);
 
         return root;
     }
 
-    template<typename T>
-    T getOrDefault(Poco::JSON::Object::Ptr object, std::string field, T defaultValue) {
-        if (object->has(field)) {
-            return object->getValue<T>(field);
-        }
-        return defaultValue;
-    }
-
     User User::fromJson(const std::string &str) {
+        std::cout << str << std::endl;
         User user;
         Poco::JSON::Parser parser;
         Poco::Dynamic::Var result = parser.parse(str);

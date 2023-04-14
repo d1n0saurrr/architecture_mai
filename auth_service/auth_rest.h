@@ -140,7 +140,7 @@ class AuthRequestHandler : public HTTPRequestHandler {
                         std::cout << "Scheme/token: " << scheme << "/" << token << std::endl;
                         if (scheme == "Bearer") {
                             database::User user = validate(token);
-                            response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_ACCEPTED);
+                            response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_OK);
                             response.setChunkedTransferEncoding(true);
                             response.setContentType("application/json");
                             Poco::JSON::Object::Ptr root = new Poco::JSON::Object();

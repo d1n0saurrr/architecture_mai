@@ -72,7 +72,7 @@ bool validateToken(std::string scheme, std::string token, long &id, std::string 
                 response_body += c;
         }
 
-        if (response.getStatus() != Poco::Net::HTTPResponse::HTTPStatus::HTTP_ACCEPTED) {
+        if (response.getStatus() != Poco::Net::HTTPResponse::HTTPStatus::HTTP_OK) {
             std::cout << "Failed to validate token [" << response.getStatus() << "] " << response_body << std::endl;
             return false;
         }

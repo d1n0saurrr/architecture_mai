@@ -11,8 +11,11 @@
 
 #include <sstream>
 #include <exception>
+#include "./user.h"
+#include "../utils/json.h"
 
 #define TABLE_NAME "trip"
+#define TABLE_NAME_2 "passengers"
 
 using namespace Poco::Data::Keywords;
 using Poco::Data::Session;
@@ -39,10 +42,25 @@ namespace database {
         
             select.execute();
             Poco::Data::RecordSet rs(select);
-            if (rs.moveFirst())
-                return trip;
+            if (!rs.moveFirst())
+                return Trip::empty();
 
-            return Trip::empty();
+            trip.author() = database::User::get_by_id(trip._author_id);
+            trip.route() = database::Route::get_by_id(trip._route_id);
+
+            Poco::Data::Statement select2(session);
+            long passenger_id;
+
+            select2 << "select passenger_id from " << TABLE_NAME_2 << " where trip_id = ?",
+                into(passenger_id),
+                use(id),
+                range(0, 1);
+        
+            while (!select2.done())
+                if (select2.execute())
+                    trip.passengers().push_back(database::User::get_by_id(passenger_id));
+
+            return trip;
         } catch (Poco::Data::MySQL::ConnectionException &e) {
             std::cout << "connection:" << e.what() << std::endl;
             throw;
@@ -96,21 +114,22 @@ namespace database {
             
             std::vector<Trip> result;
             Trip trip;
+            trip.creation_date() = null;
             std::string points_str;
 
-            select << "select id, author_id, name, description, route_id, date, creation_date from "  << TABLE_NAME << " where deleted = false",
+            select << "select t.id, t.author_id, r.points, t.date, t.name, t.description from " << TABLE_NAME << " t join route r on r.id = t.id where t.deleted = false",
                 into(trip._id),
                 into(trip._author_id),
-                into(trip._name),
-                into(trip._description),
-                into(trip._route_id),
+                into(points_str),
                 into(trip._date),
-                into(trip._creation_date),
+                into(trip._description),
                 range(0, 1);
         
             while (!select.done())
-                if (select.execute())
+                if (select.execute()) {
+                    trip.points() = database::Route::pointsFromJson(points_str);
                     result.push_back(trip);
+                }
 
             return result;
         } catch (Poco::Data::MySQL::ConnectionException &e) {
@@ -122,27 +141,113 @@ namespace database {
         }
     }
 
-    Poco::JSON::Object::Ptr Trip::toJSON() const {
-        Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+    void Trip::add_passenger(long passenger_id) {
+        Poco::Data::Session session = database::Database::get().create_session();
+        session.begin();
+        try {
+            Poco::Data::Statement insert(session);
 
-        root->set("id", _id);
-        root->set("authorId", _author_id);
-        root->set("name", _name);
-        root->set("description", _description);
-        root->set("routeId", _route_id);
-        root->set("date", _date);
-        root->set("creationDate", _creation_date);
-        root->set("deleted", _deleted);
+            insert << "INSERT INTO " << TABLE_NAME_2 << " (passenger_id, trip_id) VALUES(?, ?)",
+                use(passenger_id),
+                use(_id);
 
-        return root;
+            insert.execute();
+            long id;
+
+            Poco::Data::Statement select(session);
+            select << "SELECT LAST_INSERT_ID()",
+                into(id),
+                range(0, 1);
+
+            if (!select.done())
+                select.execute();
+            
+            session.commit();
+            
+            std::cout << "New entity id:" << id << std::endl;
+        } catch (Poco::Data::MySQL::ConnectionException &e) {
+            session.rollback();
+            std::cout << "connection:" << e.what() << " :: " << e.message() << std::endl;
+            throw;
+        } catch (Poco::Data::MySQL::StatementException &e) {
+            session.rollback();
+            std::cout << "statement:" << e.what() << " :: " << e.message() << std::endl;
+            throw;
+        }
     }
 
-    template<typename T>
-    T getOrDefault(Poco::JSON::Object::Ptr object, std::string field, T defaultValue) {
-        if (object->has(field)) {
-            return object->getValue<T>(field);
+    void Trip::remove_passenger(long passenger_id) {
+        Poco::Data::Session session = database::Database::get().create_session();
+        session.begin();
+        try {
+            Poco::Data::Statement insert(session);
+
+            insert << "DELETE FROM " << TABLE_NAME_2 << " WHERE id = ?",
+                use(passenger_id);
+
+            insert.execute();
+            long id;
+
+            Poco::Data::Statement select(session);
+            select << "SELECT LAST_INSERT_ID()",
+                into(id),
+                range(0, 1);
+
+            if (!select.done())
+                select.execute();
+            
+            session.commit();
+            
+            std::cout << "Delete entity id:" << id << std::endl;
+        } catch (Poco::Data::MySQL::ConnectionException &e) {
+            session.rollback();
+            std::cout << "connection:" << e.what() << " :: " << e.message() << std::endl;
+            throw;
+        } catch (Poco::Data::MySQL::StatementException &e) {
+            session.rollback();
+            std::cout << "statement:" << e.what() << " :: " << e.message() << std::endl;
+            throw;
         }
-        return defaultValue;
+    }
+    
+    std::string get_date_formatted(Poco::DateTime date) {
+        return Poco::DateTimeFormatter::format(date, "%Y-%m-%d %H:%M:%S");
+    }
+
+    Poco::JSON::Object::Ptr Trip::toJSON() const {
+        Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+        Poco::JSON::Array::Ptr root2 = new Poco::JSON::Array();
+        for (database::User passenger : _passengers) {
+            root2->add(passenger.toJSON());
+        }
+
+        Poco::JSON::Array::Ptr root3 = new Poco::JSON::Array();
+        for (std::string point : _points) {
+            root3->add(point);
+        }
+
+        root->set("id", _id);
+        if (_author.get_login() != "")
+            root->set("author", _author.toJSON());
+        else
+            root->set("authorId", _author_id);
+        if (_name != "")
+            root->set("name", _name);
+        if (_passengers.size() > 0)
+            root->set("passengers", root2);
+        if (_points.size() > 0)
+            root->set("route", root3);
+        else if (_route.get_name() != "")
+            root->set("route", _route.toJSON());
+        if (_description != "")
+            root->set("description", _description);
+        root->set("date", _date);
+        if (_creation_date != null)
+            root->set("creationDate", get_date_formatted(_creation_date));
+        if (!_deleted)
+            root->set("deleted", get_date_formatted(_deleted));
+
+        return root;
     }
 
     Trip Trip::fromJson(const std::string &str) {
@@ -163,6 +268,34 @@ namespace database {
         trip.deleted() = getOrDefault<bool>(object, "deleted", false);
 
         return trip;
+    }
+
+    std::ostream& operator<<(std::ostream& os, const Trip& trip)
+    {
+        std::ostringstream passengers;
+        passengers << "[";
+        for (database::User user : trip.get_passengers())
+            passengers << user << ", ";
+        passengers << "]";
+
+        std::string points_str;
+        for (std::string point : trip.get_points()) {
+            points_str += point;
+        }
+
+        return os << "("
+                << trip.get_id() << ", "
+                << trip.get_author() << ", "
+                << trip.get_author_id() << ", "
+                << trip.get_name() << ", "
+                << trip.get_description() << ", "
+                << get_date_formatted(trip.get_date()) << ", "
+                << get_date_formatted(trip.get_creation_date()) << ", "
+                << passengers.str() << ", "
+                << trip.get_route() << ", "
+                << trip.get_route_id() << ", "
+                << points_str << ", "
+                << ")";
     }
 
     long Trip::get_id() const {
@@ -193,6 +326,22 @@ namespace database {
         return _creation_date;
     }
 
+    const database::User &Trip::get_author() const {
+        return _author;
+    }
+
+    const std::vector<database::User> &Trip::get_passengers() const {
+        return _passengers;
+    }
+
+    const database::Route &Trip::get_route() const {
+        return _route;
+    }
+
+    const std::vector<std::string> &Trip::get_points() const {
+        return _points;
+    }
+
     long &Trip::id() {
         return _id;
     }
@@ -219,6 +368,22 @@ namespace database {
 
     Poco::DateTime &Trip::date() {
         return _date;
+    }
+
+    database::User &Trip::author() {
+        return _author;
+    }
+
+    std::vector<database::User> &Trip::passengers() {
+        return _passengers;
+    }
+
+    database::Route &Trip::route() {
+        return _route;
+    }
+
+    std::vector<std::string> &Trip::points() {
+        return _points;
     }
 
     bool Trip::is_deleted() const {

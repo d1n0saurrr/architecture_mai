@@ -20,6 +20,7 @@ paths:
                   - login
                   - password
                   - email
+                  - tel
                   - firstName
                   - lastName
                 properties:
@@ -28,6 +29,8 @@ paths:
                   password:
                     type: string
                   email:
+                    type: string
+                  tel:
                     type: string
                   firstName:
                     type: string
@@ -105,28 +108,11 @@ paths:
             type: integer
       responses:
         200:
-          description: List of users
+          description: User fields
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    email:
-                      type: string
-                    login:
-                      type: string
-                    tel:
-                      type: string
-                    firstName:
-                      type: string
-                    lastName:
-                      type: string
-                    deleted:
-                      type: boolean
+                $ref: '#/components/schemas/user'
         400:
           $ref: '#/components/responses/NotFoundException'
         401:
@@ -170,22 +156,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    email:
-                      type: string
-                    login:
-                      type: string
-                    tel:
-                      type: string
-                    firstName:
-                      type: string
-                    lastName:
-                      type: string
-                    deleted:
-                      type: boolean
+                  $ref: '#/components/schemas/user'
         401:
           $ref: '#/components/responses/UnauthorizedError'
         500:
@@ -231,13 +202,6 @@ paths:
           - bearerAuth: []
     get:
           summary: Get user routes
-          parameters:
-            - name: id
-              description: User id
-              required: true
-              in: query
-              schema:
-                type: integer
           responses:
             201:
               description: Route created
@@ -270,14 +234,11 @@ paths:
               schema:
                 type: object
                 required:
-                  - authorId
                   - name
                   - description
                   - routeId
                   - date
                 properties:
-                  authorId:
-                    type: integer
                   name:
                     type: string
                   description:
@@ -327,6 +288,37 @@ paths:
             $ref: '#/components/responses/InternalServerException'
         security:
           - bearerAuth: []
+
+  /trip/joining:
+    servers: 
+      - url: http://localhost:8083/
+    post:
+        summary: Adding user to trip
+        requestBody:
+          description: Adding to trip field
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - tripId
+                properties:
+                  tripId:
+                    type: integer
+        responses:
+          201:
+            description: User added to trip | Trip info
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/trip'
+          401:
+            $ref: '#/components/responses/UnauthorizedError'
+          500:
+            $ref: '#/components/responses/InternalServerException'
+        security:
+          - bearerAuth: []
     
   /trips:
     servers: 
@@ -352,6 +344,23 @@ paths:
 
 components:
   schemas:
+    user:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        login:
+          type: string
+        tel:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        deleted:
+          type: boolean
     points:
       description: Array of route points
       type: array
