@@ -156,8 +156,10 @@ class AuthRequestHandler : public HTTPRequestHandler {
                 
                 if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST) {
                     if (hasSubstr(request.getURI(), "/sign/up")) {
-                        std::string body = extractBody(request.stream(), request.getContentLength());
-                        long id = create_user(body);
+                        auto& stream = request.stream();
+                        std::stringstream body_s;
+                        Poco::StreamCopier::copyStream(stream, body_s);
+                        long id = create_user(body_s.str());
                         response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_CREATED);
                         response.setChunkedTransferEncoding(true);
                         response.setContentType("application/json");

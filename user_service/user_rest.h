@@ -195,7 +195,10 @@ class UserRequestHandler : public HTTPRequestHandler {
 
                 if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST) {
                     if (hasSubstr(request.getURI(), "/route")) {
-                        std::string body = extractBody(request.stream(), request.getContentLength());
+                        auto& stream = request.stream();
+                        std::stringstream body_s;
+                        Poco::StreamCopier::copyStream(stream, body_s);
+                        std::string body = body_s.str();
                         if (body.length() == 0) {
                             throw validation_exception("Body is missing");
                         }
