@@ -24,11 +24,5 @@ docker compose up
 ```
 
 # Возможности
-Для тестов можно использовать созданных в скрипте сущности:
-- user: admin, password: 1234 - пользователь с правами админа
-- user: test_user, password: 1234, id: 2 - пользователь с правами юзера
-- для пользователя test_user есть один маршрут (route):
-  - author_id: 2, name: "To home", points: ["Point 1", "Point 2"], id: 1
-- у пользователя test_user есть одна поездка (trip):
-  - author_id: 2, name: "From Point 1 to Point 2", description: "Hey there! I'm going from Point 1 to Point 2. Text me if you're too!", route_id: 1, date: now() при запуске скрипта
-Также можно создавать свои сущности 
+Для версии proxysql добавлено шардирование с помощью porxysql
+Есть 2 экземпляра БД и еще одна база с единственным sequence, по которому определяется, в какой шард запишется пользователь
