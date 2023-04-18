@@ -1,6 +1,8 @@
 #include "config.h"
 
 Config::Config() {
+        // _host = "proxysql";
+        // _port = "6033";
         _host = std::getenv("DB_HOST");
         _port = std::getenv("DB_PORT");
         _login = std::getenv("DB_LOGIN");

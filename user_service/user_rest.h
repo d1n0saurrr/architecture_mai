@@ -174,6 +174,7 @@ class UserRequestHandler : public HTTPRequestHandler {
                         const Poco::URI::QueryParameters params = uri.getQueryParameters();
                         int id;
                         for (std::pair<std::string, std::string> key_value: params) {
+                            std::cout << key_value.first << " " << key_value.second << std::endl;
                             if (key_value.first == "id") {
                                 id = stoi(key_value.second);
                             }

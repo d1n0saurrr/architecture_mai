@@ -12,6 +12,7 @@
 #include <sstream>
 #include <exception>
 #include "../utils/json.h"
+#include "../utils/exceptions.h"
 
 #define TABLE_NAME "user"
 
@@ -24,19 +25,26 @@ namespace database {
         try {
             std::cout << "Trying to auth " << login << "::" << password << std::endl;
             Poco::Data::Session session = database::Database::get().create_session();
-            std::cout << "Session created" << std::endl;
-            Poco::Data::Statement select(session);
             long id;
-            select << "SELECT id FROM " << TABLE_NAME << " where login = ? and password = ? and deleted = false",
-                into(id),
-                use(login),
-                use(password),
-                range(0, 1);
+            std::vector<std::string> shards = database::Database::get_all_hints();
+            for (const std::string &shard: shards) {
+                std::cout << "Session created" << std::endl;
+                Poco::Data::Statement select(session);
+                select << "SELECT id FROM " << TABLE_NAME << " where login = ? and password = ? and deleted = false" << shard,
+                    into(id),
+                    use(login),
+                    use(password),
+                    range(0, 1);
+                
+                std::cout << "[DEBUG SQL] " << select.toString() << std::endl;
 
-            select.execute();
-            Poco::Data::RecordSet rs(select);
-            if (rs.moveFirst())
-                return id;
+                select.execute();
+                Poco::Data::RecordSet rs(select);
+                if (rs.moveFirst()) {
+                    std::cout << "[DEBUG SQL] " << id <<std::endl;
+                    return id;
+                }
+            }
         } catch (Poco::Data::DataException &e) {
             std::cout << "Exception: " << e.what() << " :: " << e.message() << std::endl;
             return -1;
@@ -50,7 +58,7 @@ namespace database {
             Poco::Data::Statement select(session);
             User user;
 
-            select << "select id, login, first_name, last_name, email, tel, deleted from "  << TABLE_NAME << " where id = ?",
+            select << "select id, login, first_name, last_name, email, tel, deleted from "  << TABLE_NAME << " where id = ?" << database::Database::sharding_hint(id),
                 into(user._id),
                 into(user._login),
                 into(user._first_name),
@@ -60,6 +68,8 @@ namespace database {
                 into(user._deleted),
                 use(id),
                 range(0, 1);
+
+            std::cout << "[DEBUG SQL] " << select.toString() << std::endl; 
         
             select.execute();
             Poco::Data::RecordSet rs(select);
@@ -82,7 +92,21 @@ namespace database {
         try {
             Poco::Data::Statement insert(session);
 
-            insert << "INSERT INTO " << TABLE_NAME << " (login, password, role, tel, first_name, last_name, email) VALUES(?, ?, ?, ?, ?, ?, ?)",
+            database::User user_login = database::User::empty();
+            database::User user_email = database::User::empty();
+            user_email.email() = _email;
+            user_login.login() = _login;
+            std::vector<database::User> users_with_same_email = search(user_email);
+            std::vector<database::User> users_with_same_login = search(user_login);
+
+            if (users_with_same_email.size() > 0 || users_with_same_login.size() > 0) {
+                throw validation_exception("User with same email or login already exists");
+            }
+
+            _id = database::Database::generate_new_id();
+
+            insert << "INSERT INTO " << TABLE_NAME << " (id, login, password, role, tel, first_name, last_name, email) VALUES(?, ?, ?, ?, ?, ?, ?, ?)" << database::Database::sharding_hint(_id),
+                use(_id),
                 use(_login),
                 use(_password),
                 use(_role),
@@ -91,16 +115,9 @@ namespace database {
                 use(_last_name),
                 use(_email);
 
+            std::cout << "[DEBUG SQL] " << insert.toString() << std::endl; 
+
             insert.execute();
-
-            Poco::Data::Statement select(session);
-            select << "SELECT LAST_INSERT_ID()",
-                into(_id),
-                range(0, 1);
-
-            if (!select.done())
-                select.execute();
-            
             session.commit();
             
             std::cout << "New entity id:" << _id << std::endl;
@@ -122,51 +139,49 @@ namespace database {
             
             std::vector<User> result;
             User user;
-
-            std::vector<std::string> conditions;
+            std::ostringstream os;
+            os << "select id, login, email, tel, first_name, last_name, role from "  << TABLE_NAME << " where deleted = false";
 
             if (like_user.get_login().length() > 0) {
                 std::replace(like_user.login().begin(), like_user.login().end(), ' ', '%');
-                conditions.push_back("lower(login) like '%" + like_user.get_login() + "%'");
+                os << " and lower(login) like '%" + like_user.get_login() + "%'";
             }
 
             if (like_user.get_email().length() > 0) {
-                conditions.push_back("lower(email) like '%" + like_user.get_email() + "%'");
+                os << " and lower(email) like '%" + like_user.get_email() + "%'";
             }
 
             if (like_user.get_first_name().length() > 0) {
                 std::replace(like_user.first_name().begin(), like_user.first_name().end(), ' ', '%');
-                conditions.push_back("lower(first_name) like '%" + like_user.get_first_name() + "%'");
+                os << " and lower(first_name) like '%" + like_user.get_first_name() + "%'";
             }
 
             if (like_user.get_last_name().length() > 0) {
                 std::replace(like_user.last_name().begin(), like_user.last_name().end(), ' ', '%');
-                conditions.push_back("lower(first_name) like '%" + like_user.get_last_name() + "%'");
+                os << " and lower(first_name) like '%" + like_user.get_last_name() + "%'";
             }
 
-            select << "select id, login, email, tel, first_name, last_name, role from "  << TABLE_NAME << " where deleted = false",
-                into(user._id),
-                into(user._login),
-                into(user._email),
-                into(user._tel),
-                into(user._first_name),
-                into(user._last_name),
-                into(user._role),
-                range(0, 1);
+            std::vector<std::string> shards = database::Database::get_all_hints();
+            for (const std::string &shard: shards) {
+                User user;
+                Poco::Data::Statement select(session);
+                select << os.str() << shard,
+                    into(user._id),
+                    into(user._login),
+                    into(user._email),
+                    into(user._tel),
+                    into(user._first_name),
+                    into(user._last_name),
+                    into(user._role),
+                    range(0, 1);
 
-            if (conditions.size() > 0) {
-                std::string cond_str;
-                for (std::string cond: conditions) {
-                    cond_str += " and " + cond;
+                std::cout << "[DEBUG SQL] " << select.toString() << std::endl; 
+
+                while (!select.done()){
+                    if (select.execute())
+                        result.push_back(user);
                 }
-                std::cout << "Search condition: " << cond_str << std::endl;
-                
-                select << cond_str;
             }
-        
-            while (!select.done())
-                if (select.execute())
-                    result.push_back(user);
 
             return result;
         } catch (Poco::Data::MySQL::ConnectionException &e) {
@@ -199,7 +214,6 @@ namespace database {
     }
 
     User User::fromJson(const std::string &str) {
-        std::cout << str << std::endl;
         User user;
         Poco::JSON::Parser parser;
         Poco::Dynamic::Var result = parser.parse(str);
