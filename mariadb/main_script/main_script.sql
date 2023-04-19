@@ -6,7 +6,7 @@ create table user (
     first_name varchar(256) not null,
     last_name varchar(256) not null,
     email varchar(128) not null unique,
-    tel varchar(20) not null unique,
+    tel varchar(20) not null,
     deleted boolean not null default false,
     primary key(id)
 );

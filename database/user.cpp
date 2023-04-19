@@ -26,6 +26,7 @@ namespace database {
             std::cout << "Trying to auth " << login << "::" << password << std::endl;
             Poco::Data::Session session = database::Database::get().create_session();
             long id;
+
             std::vector<std::string> shards = database::Database::get_all_hints();
             for (const std::string &shard: shards) {
                 std::cout << "Session created" << std::endl;
@@ -86,22 +87,53 @@ namespace database {
         }
     }
 
+    bool is_in_db(std::string login, std::string email) {
+        try {
+            Poco::Data::Session session = database::Database::get().create_session();
+            Poco::Data::Statement select(session);
+            
+            std::vector<User> result;
+            User user;
+            std::ostringstream os;
+            os << "select id from "  << TABLE_NAME << " where deleted = false and (lower(login) = ? or lower(email) = ?)";
+
+            std::vector<std::string> shards = database::Database::get_all_hints();
+            for (const std::string &shard: shards) {
+                long id;
+                Poco::Data::Statement select(session);
+                select << os.str() << shard,
+                    into(id),
+                    use(login),
+                    use(email),
+                    range(0, 1);
+
+                std::cout << "[DEBUG SQL] " << select.toString() << std::endl; 
+
+                while (!select.done()){
+                    if (select.execute())
+                        if (id)
+                            return true;
+                }
+            }
+
+            return false;
+        } catch (Poco::Data::MySQL::ConnectionException &e) {
+            std::cout << "connection:" << e.what() << " :: " << e.message() << std::endl;
+            throw;
+        } catch (Poco::Data::MySQL::StatementException &e) {
+            std::cout << "statement:" << e.what() << " :: " << e.message() << std::endl;
+            throw;
+        }
+    }
+
     void User::save_to_db() {
+        if (is_in_db(_login, _email))
+            throw validation_exception("User with same email or login already exists");
+
         Poco::Data::Session session = database::Database::get().create_session();
         session.begin();
         try {
             Poco::Data::Statement insert(session);
-
-            database::User user_login = database::User::empty();
-            database::User user_email = database::User::empty();
-            user_email.email() = _email;
-            user_login.login() = _login;
-            std::vector<database::User> users_with_same_email = search(user_email);
-            std::vector<database::User> users_with_same_login = search(user_login);
-
-            if (users_with_same_email.size() > 0 || users_with_same_login.size() > 0) {
-                throw validation_exception("User with same email or login already exists");
-            }
 
             _id = database::Database::generate_new_id();
 
