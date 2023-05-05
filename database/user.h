@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 #include "Poco/JSON/Object.h"
 
 namespace database {
@@ -51,6 +52,9 @@ namespace database {
             static User get_by_id(long id);
             static std::vector<User> search(User like_user);
             void save_to_db();
+
+            void save_to_cache();
+            static std::optional<User> get_from_cache_by_id(long id);
     };
 }
 

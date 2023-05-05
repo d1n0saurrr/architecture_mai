@@ -79,14 +79,12 @@ namespace database{
                 into(id),
                 range(0, 1);
 
-            std::cout << "[DEBUG SQL] " << select.toString() << std::endl; 
 
             if (!select.done())
                 select.execute();
 
             session.commit();
             
-            std::cout << "Generated id:" << id << std::endl;
             return id;
         } catch (Poco::Data::MySQL::ConnectionException &e) {
             session.rollback();

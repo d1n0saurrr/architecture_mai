@@ -1,6 +1,7 @@
 #include "user.h"
 #include "database.h"
 #include "../config/config.h"
+#include "../database/cache.h"
 
 #include <Poco/Data/MySQL/Connector.h>
 #include <Poco/Data/MySQL/MySQLException.h>
@@ -11,6 +12,7 @@
 
 #include <sstream>
 #include <exception>
+#include <optional>
 #include "../utils/json.h"
 #include "../utils/exceptions.h"
 
@@ -37,12 +39,9 @@ namespace database {
                     use(password),
                     range(0, 1);
                 
-                std::cout << "[DEBUG SQL] " << select.toString() << std::endl;
-
                 select.execute();
                 Poco::Data::RecordSet rs(select);
                 if (rs.moveFirst()) {
-                    std::cout << "[DEBUG SQL] " << id <<std::endl;
                     return id;
                 }
             }
@@ -69,8 +68,6 @@ namespace database {
                 into(user._deleted),
                 use(id),
                 range(0, 1);
-
-            std::cout << "[DEBUG SQL] " << select.toString() << std::endl; 
         
             select.execute();
             Poco::Data::RecordSet rs(select);
@@ -106,8 +103,6 @@ namespace database {
                     use(login),
                     use(email),
                     range(0, 1);
-
-                std::cout << "[DEBUG SQL] " << select.toString() << std::endl; 
 
                 while (!select.done()){
                     if (select.execute())
@@ -146,8 +141,6 @@ namespace database {
                 use(_first_name),
                 use(_last_name),
                 use(_email);
-
-            std::cout << "[DEBUG SQL] " << insert.toString() << std::endl; 
 
             insert.execute();
             session.commit();
@@ -207,8 +200,6 @@ namespace database {
                     into(user._role),
                     range(0, 1);
 
-                std::cout << "[DEBUG SQL] " << select.toString() << std::endl; 
-
                 while (!select.done()){
                     if (select.execute())
                         result.push_back(user);
@@ -223,6 +214,26 @@ namespace database {
             std::cout << "statement:" << e.what() << " :: " << e.message() << std::endl;
             throw;
         }
+    }
+
+    std::optional<User> User::get_from_cache_by_id(long id) {
+        try {
+            std::string result;
+            if (database::Cache::get().get(id, result))
+                return fromJson(result);
+            else
+                return std::optional<User>();
+        } catch (std::exception& err) {
+            return std::optional<User>();
+        }
+    }
+
+    void User::save_to_cache() {
+        std::stringstream ss;
+        Poco::JSON::Stringifier::stringify(toJSON(), ss);
+        std::string message = ss.str();
+        std::cout << message << std::endl;
+        database::Cache::get().put(_id, message);
     }
 
     Poco::JSON::Object::Ptr User::toJSON() const {

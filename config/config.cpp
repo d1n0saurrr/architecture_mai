@@ -1,18 +1,31 @@
 #include "config.h"
 
 Config::Config() {
-        // _host = "proxysql";
-        // _port = "6033";
-        _host = std::getenv("DB_HOST");
-        _port = std::getenv("DB_PORT");
-        _login = std::getenv("DB_LOGIN");
-        _password = std::getenv("DB_PASSWORD");
-        _database = std::getenv("DB_DATABASE");
+    // _host = std::getenv("DB_HOST");
+    // _port = std::getenv("DB_RPOXY_PORT");
+    // _login = std::getenv("DB_LOGIN");
+    // _password = std::getenv("DB_PASSWORD");
+    // _database = std::getenv("DB_DATABASE");
+    // _cache_servers = std::getenv("CACHE");
+    _host = "proxysql";
+    _port = "6033";
+    _login = "stud";
+    _password = "stud";
+    _database = "archdb";
+    _cache_servers = "cache:6379";
 }
 
 Config &Config::get() {
     static Config _instance;
     return _instance;
+}
+
+const std::string &Config::get_cache_servers() const {
+    return _cache_servers;
+}
+
+std::string &Config::cache_servers() {
+    return _cache_servers;
 }
 
 const std::string &Config::get_port() const {
@@ -30,6 +43,7 @@ const std::string &Config::get_login() const {
 const std::string &Config::get_password() const {
     return _password;
 }
+
 const std::string &Config::get_database() const {
     return _database;
 }

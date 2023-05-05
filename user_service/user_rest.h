@@ -173,16 +173,39 @@ class UserRequestHandler : public HTTPRequestHandler {
                         const Poco::URI uri(request.getURI());
                         const Poco::URI::QueryParameters params = uri.getQueryParameters();
                         int id;
+                        bool cache = false;
+                        bool found_in_cache = false;
                         for (std::pair<std::string, std::string> key_value: params) {
                             std::cout << key_value.first << " " << key_value.second << std::endl;
                             if (key_value.first == "id") {
                                 id = stoi(key_value.second);
+                            }
+
+                            if (key_value.first == "from_cache") {
+                                cache = key_value.second == "yes" ? true : false;
+                            }
+                        }
+
+                        if (cache) {
+                            std::optional<database::User> result = database::User::get_from_cache_by_id(id);
+                            if (result) {
+                                found_in_cache = true;
+                                response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                                response.setChunkedTransferEncoding(true);
+                                response.setContentType("application/json");
+                                std::ostream &ostr = response.send();
+                                Poco::JSON::Stringifier::stringify(result->toJSON(), ostr);
+                                return;
                             }
                         }
 
                         database::User user = database::User::get_by_id(id);
                         if (user.get_id() == -1) {
                             throw not_found_exception("There is no user with id = " + id);
+                        }
+
+                        if (cache && !found_in_cache) {
+                            user.save_to_cache();
                         }
 
                         std::cout << "Found user: " << user << std::endl;

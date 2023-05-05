@@ -108,47 +108,65 @@ services:
       # Mysql Admin Port
       - "6032:6032"
 
+  cache:
+    image: redis:6.2-alpine
+    container_name: cache
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning 
+    networks:
+      - arch-network
+    volumes: 
+      - cache:/data
+
   auth_service:
     build:
-      context: auth_service
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ./auth_service/Dockerfile
     container_name: auth_service
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_RPOXY_PORT}
-      DB_LOGIN: ${DB_LOGIN}
-      DB_PASSWORD: ${DB_LOGIN}
-      DB_DATABASE: ${DB_DATABASE}
-      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT}
+      - DB_HOST=proxysql
+      - DB_PORT=6033
+      - DB_LOGIN=stud
+      - DB_PASSWORD=stud
+      - DB_DATABASE=archdb
+      - AUTH_SERVICE_PORT=8081
+      - CACHE=cache:6379
     ports:
-      - ${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}
+      - 8081:8081
     networks:
       - arch-network
     depends_on:
       db_node_01:
         condition: service_healthy
+      cache:
+        condition: service_started
 
   user_service:
     build:
-      context: user_service
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ./user_service/Dockerfile
     container_name: user_service
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_RPOXY_PORT}
-      DB_LOGIN: ${DB_LOGIN}
-      DB_PASSWORD: ${DB_LOGIN}
-      DB_DATABASE: ${DB_DATABASE}
-      USER_SERVICE_PORT: ${USER_SERVICE_PORT}
-      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT}
-      AUTH_SERVICE_HOST: auth_service
+      - DB_HOST=proxysql
+      - DB_PORT=6033
+      - DB_LOGIN=stud
+      - DB_PASSWORD=stud
+      - DB_DATABASE=archdb
+      - USER_SERVICE_PORT=8082
+      - AUTH_SERVICE_HOST=auth_service
+      - AUTH_SERVICE_PORT=8081
+      - CACHE=cache:6379
     ports:
-      - ${USER_SERVICE_PORT}:${USER_SERVICE_PORT}
+      - 8082:8082
     networks:
       - arch-network
     depends_on:
       db_node_01:
         condition: service_healthy
+      cache:
+        condition: service_started
 
   # trip_service:
   #   build:
@@ -156,17 +174,17 @@ services:
   #     dockerfile: Dockerfile
   #   container_name: trip_service
   #   environment:
-  #     DB_HOST: ${DB_HOST}
-  #     DB_PORT: ${DB_RPOXY_PORT}
-  #     DB_LOGIN: ${DB_LOGIN}
-  #     DB_PASSWORD: ${DB_LOGIN}
-  #     DB_DATABASE: ${DB_DATABASE}
-  #     TRIP_SERVICE_PORT: ${TRIP_SERVICE_PORT}
-  #     USER_SERVICE_PORT: ${USER_SERVICE_PORT}
-  #     AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT}
-  #     AUTH_SERVICE_HOST: auth_service
+  #     - DB_HOST=proxysql
+  #     - DB_PORT=6033
+  #     - DB_LOGIN=stud
+  #     - DB_PASSWORD=stud
+  #     - DB_DATABASE=archdb
+  #     - TRIP_SERVICE_PORT=8083
+  #     - USER_SERVICE_PORT=8082
+  #     - AUTH_SERVICE_PORT=8081
+  #     - AUTH_SERVICE_HOST=auth_service
   #   ports:
-  #     - ${TRIP_SERVICE_PORT}:${TRIP_SERVICE_PORT}
+  #     - 8083:8083
   #   networks:
   #     - arch-network
   #   depends_on:
@@ -178,6 +196,7 @@ volumes:
   db-node-02-data:
   db-node-03-data:
   proxysql-data:
+  cache:
 
 networks:
   arch-network:
