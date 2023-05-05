@@ -6,7 +6,7 @@ Benchmark был сделан с использованием wrk. Для изм
 - get_cache.lua - скрипт для получения пользователя с рандомным id из кэша
 - get_no_cache.lua - скрипт для получения пользователя с рандомным id
 
-# С кэшом:
+# С кэшем:
 ```
 Script: ./get_cache.lua, threads: 1, connections: 1
 Running 10s test @ http://localhost:8082/
