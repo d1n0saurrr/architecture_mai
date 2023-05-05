@@ -176,7 +176,6 @@ class UserRequestHandler : public HTTPRequestHandler {
                         bool cache = false;
                         bool found_in_cache = false;
                         for (std::pair<std::string, std::string> key_value: params) {
-                            std::cout << key_value.first << " " << key_value.second << std::endl;
                             if (key_value.first == "id") {
                                 id = stoi(key_value.second);
                             }
@@ -187,6 +186,7 @@ class UserRequestHandler : public HTTPRequestHandler {
                         }
 
                         if (cache) {
+                            std::cout << "Getting user from cache" << std::endl;
                             std::optional<database::User> result = database::User::get_from_cache_by_id(id);
                             if (result) {
                                 found_in_cache = true;
